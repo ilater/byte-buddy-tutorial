@@ -1,5 +1,7 @@
 package example;
 
+import example.model.AbsFood;
+import example.model.AbsFoodImpl;
 import example.model.Bar;
 import example.model.Foo;
 import net.bytebuddy.ByteBuddy;
@@ -133,6 +135,23 @@ public class ModifyNoLoadedClass {
         Foo foo = new Foo();
         System.out.println(foo.staticM2("老温"));
     }
+
+    @Test
+    public void testAbstract() {
+        TypePool typePool = TypePool.Default.ofSystemLoader();
+        // 修改未加载的类
+        // 直接修改他的方法
+        new ByteBuddy()
+                .redefine(typePool.describe("example.model.AbsFood").resolve(), // do not use 'Bar.class'
+                        ClassFileLocator.ForClassLoader.ofSystemLoader())
+                // 将toString 方法 直接返回老温
+                .method(ElementMatchers.named("name"))
+                .intercept(FixedValue.value("老温"))
+                .make()
+                .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
+        System.out.println(new AbsFoodImpl().getOriginName());
+    }
+
 
 
     // 使用byte buddy 实现修改未加载的类
